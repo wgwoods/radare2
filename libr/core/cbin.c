@@ -1439,7 +1439,7 @@ static int bin_relocs(RCore *r, int mode, int va) {
 		} else if (IS_MODE_SIMPLE (mode)) {
 			r_cons_printf ("0x%08"PFMT64x"  %s\n", addr, reloc->import ? reloc->import->name : "");
 		} else if (IS_MODE_RAD (mode)) {
-			char *name = reloc->import
+			char *name = reloc->name? reloc->name : reloc->import
 				? strdup (reloc->import->name)
 				: (reloc->symbol ? strdup (reloc->symbol->name) : NULL);
 			if (name && bin_demangle) {
@@ -1494,7 +1494,9 @@ static int bin_relocs(RCore *r, int mode, int va) {
 			}
 			r_cons_printf ("vaddr=0x%08"PFMT64x" paddr=0x%08"PFMT64x" type=%s",
 				addr, reloc->paddr, bin_reloc_type_name (reloc));
-			if (reloc->import && reloc->import->name[0]) {
+			if (reloc->name) {
+				r_cons_printf (" %s", reloc->name);
+			} else if (reloc->import && reloc->import->name[0]) {
 				r_cons_printf (" %s", name);
 			} else if (reloc->symbol && name && name[0]) {
 				r_cons_printf (" %s", name);

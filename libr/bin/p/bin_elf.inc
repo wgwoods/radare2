@@ -648,20 +648,14 @@ static RList* libs(RBinFile *bf) {
 }
 
 static RBinReloc *reloc_convert(struct Elf_(r_bin_elf_obj_t) *bin, RBinElfReloc *rel, ut64 GOT) {
-	RBinReloc *r = NULL;
-	ut64 B, P;
+	r_return_val_if_fail (bin && rel, NULL);
 
-	if (!bin || !rel) {
-		return NULL;
-	}
-	B = bin->baddr;
-	P = rel->rva; // rva has taken baddr into account
-	if (!(r = R_NEW0 (RBinReloc))) {
+	ut64 B = bin->baddr;
+	ut64 P = rel->rva; // rva has taken baddr into account
+	RBinReloc *r = R_NEW0 (RBinReloc);
+	if (!r) {
 		return r;
 	}
-	r->import = NULL;
-	r->symbol = NULL;
-	r->is_ifunc = false;
 	r->addend = rel->addend;
 	if (rel->sym) {
 		if (rel->sym < bin->imports_by_ord_size && bin->imports_by_ord[rel->sym]) {
@@ -669,6 +663,13 @@ static RBinReloc *reloc_convert(struct Elf_(r_bin_elf_obj_t) *bin, RBinElfReloc 
 		} else if (rel->sym < bin->symbols_by_ord_size && bin->symbols_by_ord[rel->sym]) {
 			r->symbol = bin->symbols_by_ord[rel->sym];
 		}
+	}
+	if (r->import) {
+		r->name = r_str_newf ("reloc.%x.%s", (ut32)rel->rva, r->import->name);
+	} else if (r->symbol) {
+		r->name = r_str_newf ("reloc.%x.%s", (ut32)rel->rva, r->symbol->name);
+	} else {
+		r->name = r_str_newf ("reloc.%d", rel->sym);
 	}
 	r->vaddr = rel->rva;
 	r->paddr = rel->offset;
@@ -738,7 +739,7 @@ static RBinReloc *reloc_convert(struct Elf_(r_bin_elf_obj_t) *bin, RBinElfReloc 
 	#undef ADD
 
 	free (r);
-	return 0;
+	return NULL;
 }
 
 static RList* relocs(RBinFile *bf) {
