@@ -2891,6 +2891,7 @@ struct r_bin_pe_import_t* PE_(r_bin_pe_get_imports)(struct PE_(r_bin_pe_obj_t)* 
 	PE_DWord dll_name_offset = 0;
 	PE_DWord paddr = 0;
 	PE_DWord import_func_name_offset;
+	PE_(image_import_directory) cid;
 	PE_(image_import_directory) * curr_import_dir = NULL;
 	PE_(image_delay_import_directory) * curr_delay_import_dir = 0;
 
@@ -2907,11 +2908,12 @@ struct r_bin_pe_import_t* PE_(r_bin_pe_get_imports)(struct PE_(r_bin_pe_obj_t)* 
 	off = bin->import_directory_offset;
 	if (off < bin->size && off > 0) {
 		void* last;
-		if (off + sizeof(PE_(image_import_directory)) > bin->size) {
+		if (off + sizeof (PE_(image_import_directory)) > bin->size) {
 			return NULL;
 		}
-		curr_import_dir = (PE_(image_import_directory)*)(bin->b->buf + bin->import_directory_offset);
-		dll_name_offset = curr_import_dir->Name;
+		r_buf_read_at (bin->b, bin->import_directory_offset, &cid, sizeof (cid));
+		// curr_import_dir = (PE_(image_import_directory)*)(bin->b->buf + bin->import_directory_offset);
+		dll_name_offset = cid.Name;
 
 		if (bin->import_directory_size < 1) {
 			return NULL;
@@ -2922,12 +2924,15 @@ struct r_bin_pe_import_t* PE_(r_bin_pe_get_imports)(struct PE_(r_bin_pe_obj_t)* 
 			bin->import_directory_size = bin->size - bin->import_directory_offset;
 		}
 		last = (char*) curr_import_dir + bin->import_directory_size;
+#if 0
 		while ((void*) (curr_import_dir + 1) <= last && (
 			curr_import_dir->FirstThunk != 0 || curr_import_dir->Name != 0 ||
 			curr_import_dir->TimeDateStamp != 0 || curr_import_dir->Characteristics != 0 ||
 			curr_import_dir->ForwarderChain != 0)) {
+#endif
+		while (curr_import_dir <= last) {
 			int rr;
-			dll_name_offset = curr_import_dir->Name;
+			dll_name_offset = cid.Name;
 			paddr = bin_pe_rva_to_paddr (bin, dll_name_offset);
 			if (paddr > bin->size) {
 				goto beach;
@@ -2951,6 +2956,7 @@ struct r_bin_pe_import_t* PE_(r_bin_pe_get_imports)(struct PE_(r_bin_pe_obj_t)* 
 				break;
 			}
 			curr_import_dir++;
+			r_buf_read_at (bin->b, curr_import_dir, &cid, sizeof (cid));
 		}
 	}
 	off = bin->delay_import_directory_offset;
@@ -3035,11 +3041,20 @@ struct r_bin_pe_lib_t* PE_(r_bin_pe_get_libs)(struct PE_(r_bin_pe_obj_t)* bin) {
 		}
 		curr_import_dir = (PE_(image_import_directory)*)(bin->b->buf + off);
 		last = (char*) curr_import_dir + bin->import_directory_size;
-		while ((void*) (curr_import_dir + 1) <= last && (
-			curr_import_dir->FirstThunk || curr_import_dir->Name ||
-			curr_import_dir->TimeDateStamp || curr_import_dir->Characteristics ||
-			curr_import_dir->ForwarderChain)) {
-			name_off = bin_pe_rva_to_paddr (bin, curr_import_dir->Name);
+		// while ((void*) (curr_import_dir + 1) <= last) {
+		while (off < last) {
+#if 0
+			if (!curr_import_dir->FirstThunk
+			|| !curr_import_dir->Name
+			|| !curr_import_dir->TimeDateStamp
+			|| !curr_import_dir->Characteristics
+			|| !curr_import_dir->ForwarderChain) {
+				continue;
+			}
+#endif
+			PE_(image_import_directory) cid;
+			r_buf_read_at (bin->b, bin->import_directory_offset, &cid, sizeof (cid));
+			name_off = bin_pe_rva_to_paddr (bin, cid.Name);
 			len = r_buf_read_at (bin->b, name_off, (ut8*) libs[index].name, PE_STRING_LENGTH);
 			if (!libs[index].name[0]) { // minimum string length
 				goto next;
