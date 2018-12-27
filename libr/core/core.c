@@ -1841,44 +1841,39 @@ static int is_string (const ut8 *buf, int size, int *len) {
 static char *r_core_anal_hasrefs_to_depth(RCore *core, ut64 value, int depth);
 R_API char *r_core_anal_hasrefs(RCore *core, ut64 value, bool verbose) {
 	if (verbose) {
-		return r_core_anal_hasrefs_to_depth(core, value, r_config_get_i (core->config, "hex.depth"));
+		const int hex_depth = r_config_get_i (core->config, "hex.depth");
+		return r_core_anal_hasrefs_to_depth (core, value, hex_depth);
 	}
 	RFlagItem *fi = r_flag_get_i (core->flags, value);
-	if (fi) {
-		return strdup (fi->name);
-	}
-	return NULL;
+	return fi? strdup (fi->name): NULL;
 }
 
 static char *r_core_anal_hasrefs_to_depth(RCore *core, ut64 value, int depth) {
-	RStrBuf *s = r_strbuf_new (NULL);
-	ut64 type;
-	RBinSection *sect;
-	char *mapname = NULL;
-	RAnalFunction *fcn;
-	RFlagItem *fi = r_flag_get_i (core->flags, value);
-	type = r_core_anal_address (core, value);
-	fcn = r_anal_get_fcn_in (core->anal, value, 0);
-	if (value && value != UT64_MAX) {
-		RDebugMap *map = r_debug_map_get (core->dbg, value);
-		if (map && map->name && map->name[0]) {
-			mapname = strdup (map->name);
-		}
+	r_return_val_if_fail (core && value != UT64_MAX, NULL);
+
+	if (depth < 1) {
+		return NULL;
 	}
-	sect = value? r_bin_get_section_at (r_bin_cur_object (core->bin), value, true): NULL;
-	if(! ((type&R_ANAL_ADDR_TYPE_HEAP)||(type&R_ANAL_ADDR_TYPE_STACK)) ) {
-		// Do not repeat "stack" or "heap" words unnecessarily.
-		if (sect && sect->name[0]) {
+	RFlagItem *fi = r_flag_get_i (core->flags, value);
+	ut64 type = r_core_anal_address (core, value);
+	RDebugMap *map = r_debug_map_get (core->dbg, value);
+	RStrBuf *s = r_strbuf_new (NULL);
+	RBinObject *bo = r_bin_cur_object (core->bin);
+	if (bo) {
+		RBinSection *sect = r_bin_get_section_at (bo, value, true);
+		if (sect && sect->name[0] && (! ((type & R_ANAL_ADDR_TYPE_HEAP) || (type & R_ANAL_ADDR_TYPE_STACK)))) {
 			r_strbuf_appendf (s," (%s)", sect->name);
 		}
-		if (mapname) {
-			r_strbuf_appendf (s, " (%s)", mapname);
-			R_FREE (mapname);
-		}
+	}
+	char *mapname = (map && map->name && map->name[0])? strdup (map->name): NULL;
+	if (mapname) {
+		r_strbuf_appendf (s, " (%s)", mapname);
+		R_FREE (mapname);
 	}
 	if (fi) {
 		r_strbuf_appendf (s, " %s", fi->name);
 	}
+	RAnalFunction *fcn = r_anal_get_fcn_in (core->anal, value, 0);
 	if (fcn) {
 		r_strbuf_appendf (s, " %s", fcn->name);
 	}
