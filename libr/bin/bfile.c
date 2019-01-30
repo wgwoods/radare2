@@ -852,7 +852,6 @@ R_API bool r_bin_file_close(RBin *bin, int bd) {
 R_API int r_bin_file_hash(RBin *bin, ut64 limit, const char *file) {
 	char hash[128], *p;
 	RHash *ctx;
-	ut8* buf;
 	ut64 buf_len = 0;
 	int i;
 	RBinFile *bf = bin->cur;
@@ -879,10 +878,13 @@ R_API int r_bin_file_hash(RBin *bin, ut64 limit, const char *file) {
 		return -1;
 	}
 	//  XXX should use io api not raw file slurping
-	buf = r_file_slurp (file, &buf_len);
+	int int_buflen;
+	ut8* buf = (ut8*)r_file_slurp (file, &int_buflen);
+	
 	if (!buf) {
 		return false;
 	}
+	buf_len = int_buflen;
 	if (buf) {
 		ctx = r_hash_new (false, R_HASH_MD5 | R_HASH_SHA1);
 #define BLK_SIZE_OFF 1024
@@ -912,6 +914,7 @@ R_API RBinFile *r_bin_file_at(RBin *bin, ut64 addr) {
 	r_list_foreach (bin->binfiles, iter, bf) {
 		bin->cur = bf;
 		RList *sections = r_bin_get_sections (bin);
+		RBinSection *s;
 		r_list_foreach (sections, iter, s) {
 			ut64 from = s->vaddr;
 			ut64 to = from + s->vsize;
