@@ -235,6 +235,7 @@ extern RAsmPlugin r_asm_plugin_mcs96;
 extern RAsmPlugin r_asm_plugin_mips_cs;
 extern RAsmPlugin r_asm_plugin_mips_gnu;
 extern RAsmPlugin r_asm_plugin_msp430;
+extern RAsmPlugin r_asm_plugin_nds32;
 extern RAsmPlugin r_asm_plugin_nios2;
 extern RAsmPlugin r_asm_plugin_pic;
 extern RAsmPlugin r_asm_plugin_ppc_cs;

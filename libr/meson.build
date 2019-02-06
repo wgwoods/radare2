@@ -83,6 +83,7 @@ asm_plugins = [
   'mips_cs',
   'mips_gnu',
   'msp430',
+  'nds32',
   'nios2',
   'pic',
   'ppc_cs',
