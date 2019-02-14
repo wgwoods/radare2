@@ -12,5 +12,5 @@ ifeq ($(WITHPIC),1)
 ALL_TARGETS+=${TARGET_NDS32}
 
 ${TARGET_NDS32}: ${OBJ_NDS32}
-	${CC} $(call libname,asm_nds32) ${LDFLAGS} ${CFLAGS} -o asm_nds32.${EXT_SO} ${OBJ_NDS32}
+	${CC} $(call libname,asm_nds32) ${LDFLAGS} ${CFLAGS} -o ${TARGET_NDS32} ${OBJ_NDS32}
 endif

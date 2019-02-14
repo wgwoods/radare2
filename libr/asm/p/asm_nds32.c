@@ -1,15 +1,12 @@
 /*
  * nds32 disassembly plugin for radare2
  * Copyright (c) 2019, Will Woods <wwoods@redhat.com>
- * Covered under the terms of the LGPLv2+
+ * Covered under the terms of the GPL3 (since that's what binutils uses)
  */
 
 #include <r_asm.h>
 #include <r_lib.h>
 #include "disas-asm.h"
-
-/* just pull in the whold dang thing */
-//#include "../arch/nds32/gnu/nds32-asm.c"
 
 static unsigned long Offset = 0;
 static RStrBuf *buf_global = NULL;
@@ -27,6 +24,8 @@ static int nds32_symbol_at_address(bfd_vma addr, struct disassemble_info * info)
 static void nds32_memory_error_func(int status, bfd_vma memaddr, struct disassemble_info *info) {
         //--
 }
+
+extern void disassemble_init_nds32(struct disassemble_info *info);
 
 /* make sure we can fprintf etc. */
 DECLARE_GENERIC_PRINT_ADDRESS_FUNC()
@@ -48,7 +47,6 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
     if (len<2) {
         return -1;
     }
-
     /* prep our global variables */
     buf_global = &op->buf_asm;
     Offset = a->pc;
@@ -56,6 +54,7 @@ static int disassemble(RAsm *a, RAsmOp *op, const ut8 *buf, int len) {
 
     /* prep disassembler */
     memset(&info, '\0', sizeof(struct disassemble_info));
+    disassemble_init_nds32(&info);
     info.buffer = bytes;
     info.endian = !a->big_endian;
     info.read_memory_func = &nds32_buffer_read_memory;
@@ -82,8 +81,8 @@ RAsmPlugin r_asm_plugin_nds32 = {
     .desc = "NDS32",
     .arch = "nds32",
     .bits = 16|32,
-    .endian = R_SYS_ENDIAN_LITTLE | R_SYS_ENDIAN_BIG,
-    .license = "GPL", /* FIXME: is that correct? */
+    .endian = R_SYS_ENDIAN_BIG,
+    .license = "GPL3",
     .disassemble = &disassemble,
 };
 

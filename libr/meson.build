@@ -23,6 +23,7 @@ anal_plugins = [
   'mips_cs',
   'mips_gnu',
   'msp430',
+  'nds32',
   'nios2',
   'null',
   'pic',
