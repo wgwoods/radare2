@@ -59,6 +59,7 @@ r_anal_sources = [
   'p/anal_mips_cs.c',
   'p/anal_mips_gnu.c',
   'p/anal_msp430.c',
+  'p/anal_nds32.c',
   'p/anal_nios2.c',
   'p/anal_null.c',
   'p/anal_pic.c',

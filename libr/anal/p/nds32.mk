@@ -1,0 +1,10 @@
+OBJ_NDS32=anal_nds32.o
+
+STATIC_OBJ+=${OBJ_NDS32}
+TARGET_NDS32=anal_nds32.${EXT_SO}
+
+ALL_TARGETS+=${TARGET_NDS32}
+
+${TARGET_NDS32}: ${OBJ_NDS32}
+	${CC} $(call libname,anal_nds32) ${CFLAGS} \
+		-o  ${TARGET_NDS32} ${OBJ_NDS32}
